@@ -1,5 +1,5 @@
-use payment_gateway::{init_logger, PaymentOptions, GatewayRegistry};
-use payment_gateway::gateways::{stripe::StripeGateway, razorpay::RazorpayGateway, cashfree::CashfreeGateway};
+use unify::{init_logger, PaymentOptions, GatewayRegistry};
+use unify::gateways::{stripe::StripeGateway, razorpay::RazorpayGateway, cashfree::CashfreeGateway};
 
 #[tokio::main]
 async fn main() {
