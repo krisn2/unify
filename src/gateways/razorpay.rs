@@ -1,8 +1,9 @@
-use async_trait::async_trait;
-use reqwest::Client;
+// use super::PaymentGateway;
+use crate::gateways::PaymentGateway;
 use crate::error::{PaymentError, PaymentResult};
 use crate::options::PaymentOptions;
-use super::PaymentGateway;
+use async_trait::async_trait;
+use reqwest::Client;
 
 pub struct RazorpayGateway {
     key_id: String,
@@ -17,7 +18,12 @@ impl RazorpayGateway {
 
 #[async_trait]
 impl PaymentGateway for RazorpayGateway {
-    async fn checkout(&self, amount: u64, currency: &str, options: &PaymentOptions) -> PaymentResult<String> {
+    async fn checkout(
+        &self,
+        amount: u64,
+        currency: &str,
+        options: &PaymentOptions,
+    ) -> PaymentResult<String> {
         let client = Client::builder()
             .timeout(std::time::Duration::from_secs(10))
             .build()
@@ -37,10 +43,18 @@ impl PaymentGateway for RazorpayGateway {
             .map_err(|e| PaymentError::NetworkError(e.to_string()))?;
 
         if response.status().is_success() {
-            let body = response.text().await.map_err(|e| PaymentError::NetworkError(e.to_string()))?;
+            let body = response
+                .text()
+                .await
+                .map_err(|e| PaymentError::NetworkError(e.to_string()))?;
             Ok(body)
         } else {
-            Err(PaymentError::ApiError(response.text().await.map_err(|e| PaymentError::NetworkError(e.to_string()))?))
+            Err(PaymentError::ApiError(
+                response
+                    .text()
+                    .await
+                    .map_err(|e| PaymentError::NetworkError(e.to_string()))?,
+            ))
         }
     }
 }
