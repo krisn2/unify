@@ -1,5 +1,4 @@
-// use super::PaymentGateway;
-use crate::gateways::PaymentGateway;
+use super::PaymentGateway;
 use crate::error::{PaymentError, PaymentResult};
 use crate::options::PaymentOptions;
 use async_trait::async_trait;
@@ -8,11 +7,16 @@ use reqwest::Client;
 pub struct RazorpayGateway {
     key_id: String,
     key_secret: String,
+    base_url: String,
 }
 
 impl RazorpayGateway {
-    pub fn new(key_id: String, key_secret: String) -> Self {
-        RazorpayGateway { key_id, key_secret }
+    pub fn new(key_id: String, key_secret: String, base_url: String) -> Self {
+        RazorpayGateway {
+            key_id,
+            key_secret,
+            base_url,
+        }
     }
 }
 
@@ -30,10 +34,10 @@ impl PaymentGateway for RazorpayGateway {
             .map_err(|e| PaymentError::NetworkError(e.to_string()))?;
 
         let response = client
-            .post("https://api.razorpay.com/v1/orders")
+            .post(&format!("{}/v1/orders", self.base_url)) // Use base URL here
             .basic_auth(&self.key_id, Some(&self.key_secret))
             .json(&serde_json::json!({
-                "amount": amount ,
+                "amount": amount,
                 "currency": currency,
                 "receipt": options.receipt.as_ref().unwrap_or(&"".to_string()),
                 "payment_capture": 1,

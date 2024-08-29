@@ -5,12 +5,16 @@ use async_trait::async_trait;
 use reqwest::Client;
 
 pub struct StripeGateway {
-    api_key: String,
+    api: String,
+    base_url: String,
 }
 
 impl StripeGateway {
-    pub fn new(api_key: String) -> Self {
-        Self { api_key }
+    pub fn new(api: String, base_url: String) -> Self {
+        Self {
+            api,
+            base_url,  
+        }
     }
 }
 #[async_trait]
@@ -27,8 +31,8 @@ impl PaymentGateway for StripeGateway {
             .map_err(|e| PaymentError::NetworkError(e.to_string()))?;
 
         let response = client
-            .post("https://api.stripe.com/v1/charges")
-            .basic_auth(&self.api_key, Some(""))
+            .post(&format!("{}/v1/orders", self.base_url))
+            .basic_auth(&self.api, Some(""))
             .form(&[
                 ("amount", amount.to_string()),
                 ("currency", currency.to_string()),

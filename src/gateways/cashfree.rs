@@ -7,11 +7,12 @@ use reqwest::Client;
 pub struct CashfreeGateway {
     key_id: String,
     key_secret: String,
+    base_url: String,
 }
 
 impl CashfreeGateway {
-    pub fn new(key_id: String, key_secret: String) -> Self {
-        CashfreeGateway { key_id, key_secret }
+    pub fn new(key_id: String, key_secret: String, base_url: String) -> Self {
+        CashfreeGateway { key_id, key_secret , base_url}
     }
 }
 
@@ -29,7 +30,7 @@ impl PaymentGateway for CashfreeGateway {
             .map_err(|e| PaymentError::NetworkError(e.to_string()))?;
 
         let response = client
-            .post(" https://sandbox.cashfree.com/pg/orders")
+            .post(&format!("{}/v1/orders", self.base_url))
             .basic_auth(&self.key_id, Some(&self.key_secret))
             .json(&serde_json::json!({
                 "amount": amount ,

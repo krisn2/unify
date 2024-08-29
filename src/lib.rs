@@ -2,63 +2,92 @@ pub mod error;
 pub mod gateways;
 pub mod options;
 
-pub use error::PaymentError;
-pub use gateways::GatewayRegistry;
+pub use error::{PaymentError, PaymentResult};
+pub use gateways::{GatewayRegistry, PaymentGateway};
 pub use options::PaymentOptions;
 
+use std::sync::Once;
+
+static INIT: Once = Once::new();
+
 pub fn init_logger() {
-    env_logger::init();
+    INIT.call_once(|| {
+        env_logger::init();
+    });
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::gateways::razorpay::RazorpayGateway;
-    use mockito::mock;
+    use httpmock::MockServer;
+    use httpmock::Method::POST;
 
-    // Test Razorpay success scenario
     #[tokio::test]
     async fn test_razorpay_checkout_success() {
         crate::init_logger();
 
-        let _m = mock("POST", "/v1/orders")
-            .with_status(200)
-            .with_body(r#"{"id":"order_id"}"#)
-            .create();
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(POST).path("/v1/orders");
+            then.status(200)
+                .json_body(r#"{"id":"order_id"}"#);
+        });
 
-        let razorpay_gateway = RazorpayGateway::new("".to_string(), "secret".to_string());
+        // Provide the base URL of the mock server
+        let razorpay_gateway = RazorpayGateway::new(
+            "rzp_test_S9w2PT1FLmzHLx".to_string(),
+            "T0SmkQ8iBDeXFRIbwdzfgJ6e".to_string(),
+            server.base_url() // Pass the base URL here
+        );
+
         let options = PaymentOptions {
             payment_method: None,
             receipt: Some("receipt#123".to_string()),
             customer_id: None,
             metadata: None,
         };
-        let result = razorpay_gateway.checkout(500, "INR", &options).await;
+
+        let result = razorpay_gateway
+            .checkout(500, "INR", &options)
+            .await;
+
         assert!(result.is_ok());
+        mock.assert_hits(1);
     }
 
-    // Test Razorpay failure scenario
     #[tokio::test]
     async fn test_razorpay_checkout_failure() {
         crate::init_logger();
 
-        let _m = mock("POST", "/v1/orders")
-            .with_status(500)
-            .with_body(r#"{"error":"some_error"}"#)
-            .create();
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(POST).path("/v1/orders");
+            then.status(500)
+                .json_body(r#"{"error":"some_error"}"#);
+        });
 
-        let gateway = RazorpayGateway::new("test_key".to_string(), "test_secret".to_string());
+        // Provide the base URL of the mock server
+        let razorpay_gateway = RazorpayGateway::new(
+            "rzp_test_S9w2PT1FLmzHLx".to_string(),
+            "T0SmkQ8iBDeXFRIbwdzfgJ6e".to_string(),
+            server.base_url() // Pass the base URL here
+        );
+
         let options = PaymentOptions {
             payment_method: None,
             receipt: Some("receipt#123".to_string()),
             customer_id: None,
             metadata: None,
         };
-        let result = gateway.checkout(5000, "INR", &options).await;
-        assert!(result.is_err());
-    }
 
-    // Future tests for other gateways or the registry can be added here...
+        let result = razorpay_gateway
+            .checkout(5000, "INR", &options)
+            .await;
+
+        assert!(result.is_err());
+        mock.assert_hits(1);
+    }
 }
 
 
