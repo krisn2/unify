@@ -36,8 +36,8 @@ mod tests {
 
         // Provide the base URL of the mock server
         let razorpay_gateway = RazorpayGateway::new(
-            "rzp_test_S9w2PT1FLmzHLx".to_string(),
-            "T0SmkQ8iBDeXFRIbwdzfgJ6e".to_string(),
+            "test_key".to_string(),
+            "scret key".to_string(),
             server.base_url() // Pass the base URL here
         );
 
@@ -69,8 +69,8 @@ mod tests {
 
         // Provide the base URL of the mock server
         let razorpay_gateway = RazorpayGateway::new(
-            "rzp_test_S9w2PT1FLmzHLx".to_string(),
-            "T0SmkQ8iBDeXFRIbwdzfgJ6e".to_string(),
+            "test_key".to_string(),
+            "scret key".to_string(),
             server.base_url() // Pass the base URL here
         );
 
